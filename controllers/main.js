@@ -13,19 +13,31 @@ const login = async (req,res) =>{
 
     const token = jwt.sign({id, username},process.env.jsonWebToken_Secret,{expiresIn: '30d'})
 
+   
+
     console.log(username, password);
-    res.status(200).json({msg: `User token created, ${token}`})
+    res.status(200).json({msg: `User token created.`, token})
 }
 
 const dashboard = async (req,res) => {
     const authHeader = req.headers.authorization
 
-    if(!authHeader || !authHeader.startWith('Bearer ')){
+    if(!authHeader || !authHeader.startsWith('Bearer ')){
         throw new CustomAPIError('No token provided.', 401)
     }
 
-    const luckyNumber = Math.floor(Math.random()*100)
-    res.status(200).json({msg:`Hello, Saul`, secret: `Your lucky number is: ${luckyNumber}`})
+    const token = authHeader.split(' ')[1]
+
+    try {
+        const decoded = jwt.verify(token,process.env.jsonWebToken_Secret)
+        
+        const luckyNumber = Math.floor(Math.random()*100)
+    res.status(200).json({msg:`Hello, ${decoded.username}`, secret: `Your lucky number is: ${luckyNumber}`})
+    } catch (error) {
+        throw new CustomAPIError('Not authorized to use this route.', 401)
+    }
+
+    
 }
 
 module.exports = {
